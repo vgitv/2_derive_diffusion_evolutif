@@ -14,9 +14,12 @@ contains
     ! =======================================================================================================
     ! Schéma explicite
     ! =======================================================================================================
+
     ! -------------------------------------------------------------------------------------------------------
     ! Construction matrice A_psi : A_psi psi = b_psi. La sol donne psi pour n et p donnés (temps fixé)
     ! -------------------------------------------------------------------------------------------------------
+    ! m : maillage d'espace
+    ! A : matrice retournée
     subroutine build_A(m, A)
         ! paramètres
         type(Mesh), intent(in) :: m
@@ -95,12 +98,55 @@ contains
 
 
     ! -------------------------------------------------------------------------------------------------------
+    ! flux numériques
+    ! -------------------------------------------------------------------------------------------------------
+    ! schéma centré
+    function B1(x) result(B)
+        real(rp), intent(in) :: x
+        real(rp) :: B
+        B = 1.0_rp - 0.5_rp * x
+    end function
+
+    ! schéma décentré amont
+    function B2(x) result(B)
+        real(rp), intent(in) :: x
+        real(rp) :: B
+        B = 1.0_rp - min(x, 0.0_rp)
+    end function
+
+    ! schéma Scharfetter-Gummel
+    function B3(x) result(B)
+        real(rp), intent(in) :: x
+        real(rp) :: B
+        B = x / (exp(x) - 1.0_rp)
+    end function
+
+    ! flux pour n
+    function flux_G(h, psi_gauche, psi_droit, n_gauche, n_droit, B) result(flux)
+        real(rp), intent(in) :: h, psi_gauche, psi_droit, n_gauche, n_droit
+        real(rp), external :: B
+        real(rp) :: flux
+        flux = (B(psi_gauche - psi_droit) * n_gauche - B(psi_droit - psi_gauche) * n_droit) / h
+    end function
+
+    ! flux pour p
+    function flux_H(h, psi_gauche, psi_droit, p_gauche, p_droit, B) result(flux)
+        real(rp), intent(in) :: h, psi_gauche, psi_droit, p_gauche, p_droit
+        real(rp), external :: B
+        real(rp) :: flux
+        flux = (B(psi_droit - psi_gauche) * p_gauche - B(psi_gauche - psi_droit) * p_droit) / h
+    end function
+
+
+
+    ! -------------------------------------------------------------------------------------------------------
     ! Calcul le vecteur n au pas de temps suivant.
     ! -------------------------------------------------------------------------------------------------------
-    subroutine iter_n(m, n, n_suiv)
+    subroutine iter_n(m, n, B, n_suiv)
         ! paramètres
         type(Mesh), intent(in) :: m
         real(rp), dimension(:), intent(in) :: n
+        real(rp), external :: B
         real(rp), dimension(:), intent(out) :: n_suiv
 
         ! variables locales
