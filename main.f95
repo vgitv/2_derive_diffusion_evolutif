@@ -3,7 +3,7 @@ PROGRAM main
     use math
     use maillage
     use donnees
-    use variables
+    use dd
 
     implicit none
 
