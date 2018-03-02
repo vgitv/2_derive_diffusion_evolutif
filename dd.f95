@@ -147,7 +147,7 @@ contains
     ! m : maillage
     ! n : approx de n à un temps donné
     ! n_l : condition au bord gauche
-    ! n_l : condition au bord droit
+    ! n_r : condition au bord droit
     ! psi : approx de psi au même temps
     ! psi_l : condition au bord gauche
     ! psi_r : condition au bord droit
@@ -175,7 +175,8 @@ contains
         n_suiv(1) = (flux1 - flux2) * dt / m%h(1) + n(1)
 
         do i = 2, m%l - 1
-            flux1 = flux_G(m%h2(i), psi(i - 1), psi(i), n(i - 1), n(i), B)
+            !flux1 = flux_G(m%h2(i), psi(i - 1), psi(i), n(i - 1), n(i), B)
+            flux1 = flux2
             flux2 = flux_G(m%h2(i + 1), psi(i), psi(i + 1), n(i), n(i + 1), B)
             n_suiv(i) = (flux1 - flux2) * dt / m%h(i) + n(i)
         end do
@@ -184,6 +185,87 @@ contains
         flux1 = flux_G(m%h2(m%l), psi(m%l - 1), psi(m%l), n(m%l - 1), n(m%l), B)
         flux2 = flux_G(m%h2(m%l + 1), psi(m%l), psi_r(t), n(m%l), n_r(t), B)
         n_suiv(m%l) = (flux1 - flux2) * dt / m%h(i) + n(i)
+    end subroutine
+
+
+
+    ! -------------------------------------------------------------------------------------------------------
+    ! Calcul le vecteur p au pas de temps suivant.
+    ! -------------------------------------------------------------------------------------------------------
+    ! t : temps courant
+    ! dt : pas de temps
+    ! m : maillage
+    ! p : approx de n à un temps donné
+    ! p_l : condition au bord gauche
+    ! p_r : condition au bord droit
+    ! psi : approx de psi au même temps
+    ! psi_l : condition au bord gauche
+    ! psi_r : condition au bord droit
+    ! B : schéma
+    ! p_suiv : approx de n au temps suivant (return)
+    subroutine iter_p(t, dt, m, p, p_r, p_l, psi, psi_l, psi_r, B, p_suiv)
+        ! paramètres
+        real(rp), intent(in) :: t
+        real(rp), intent(in) :: dt
+        type(Mesh), intent(in) :: m
+        real(rp), dimension(:), intent(in) :: p
+        real(rp), external :: p_r, p_l
+        real(rp), dimension(:), intent(in) :: psi
+        real(rp), external :: psi_l, psi_r
+        real(rp), external :: B
+        real(rp), dimension(:), intent(out) :: p_suiv
+
+        ! variables locales
+        integer :: i
+        real(rp) :: flux1, flux2
+
+        ! premier élément
+        flux1 = flux_H(m%h2(1), psi_l(t), psi(1), p_l(t), p(1), B)
+        flux2 = flux_H(m%h2(2), psi(1), psi(2), p(1), p(2), B)
+        p_suiv(1) = (flux1 - flux2) * dt / m%h(1) + p(1)
+
+        do i = 2, m%l - 1
+            !flux1 = flux_H(m%h2(i), psi(i - 1), psi(i), p(i - 1), p(i), B)
+            flux1 = flux2
+            flux2 = flux_H(m%h2(i + 1), psi(i), psi(i + 1), p(i), p(i + 1), B)
+            p_suiv(i) = (flux1 - flux2) * dt / m%h(i) + p(i)
+        end do
+
+        ! dernier élément
+        flux1 = flux_H(m%h2(m%l), psi(m%l - 1), psi(m%l), p(m%l - 1), p(m%l), B)
+        flux2 = flux_H(m%h2(m%l + 1), psi(m%l), psi_r(t), p(m%l), p_r(t), B)
+        p_suiv(m%l) = (flux1 - flux2) * dt / m%h(i) + p(i)
+    end subroutine
+
+
+
+    ! -------------------------------------------------------------------------------------------------------
+    ! schéma volumes finis dérive diffusion évolutif
+    ! -------------------------------------------------------------------------------------------------------
+    ! t : maillage temps
+    ! m : maillage espace
+    subroutine vf_dd(t, m, n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r, n, p, psi)
+        ! paramètres
+        real(rp), dimension(:), intent(in) :: t
+        type(Mesh), intent(in) :: m
+        real(rp), external :: n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r
+        real(rp), dimension(:), intent(out) :: n, p, psi
+
+        ! variables locales
+        real(rp) :: dt
+        integer :: i
+
+        dt = t(2) - t(1)
+
+        ! initialisation n0 p0
+
+        ! calcul psi0 avec subroutin potentiel
+
+        do i = 1, size(t)
+            ! calcul itéré n suivant
+            ! calcul itéré p suivant
+            ! déduction itéré psi suivant
+        end do
     end subroutine
 
 END MODULE dd
