@@ -70,7 +70,7 @@ contains
 
 
     ! -------------------------------------------------------------------------------------------------------
-    ! Pour n et p données (temps fixé), calcul psi au même temps
+    ! Pour n et p données (temps fixé), calcule psi au même temps
     ! -------------------------------------------------------------------------------------------------------
     ! m : maillage d'espace
     ! n : approx de n à un temps donné sur les elts du maillage d'espace
@@ -142,15 +142,48 @@ contains
     ! -------------------------------------------------------------------------------------------------------
     ! Calcul le vecteur n au pas de temps suivant.
     ! -------------------------------------------------------------------------------------------------------
-    subroutine iter_n(m, n, B, n_suiv)
+    ! t : temps courant
+    ! dt : pas de temps
+    ! m : maillage
+    ! n : approx de n à un temps donné
+    ! n_l : condition au bord gauche
+    ! n_l : condition au bord droit
+    ! psi : approx de psi au même temps
+    ! psi_l : condition au bord gauche
+    ! psi_r : condition au bord droit
+    ! B : schéma
+    ! n_suiv : approx de n au temps suivant (return)
+    subroutine iter_n(t, dt, m, n, n_r, n_l, psi, psi_l, psi_r, B, n_suiv)
         ! paramètres
+        real(rp), intent(in) :: t
+        real(rp), intent(in) :: dt
         type(Mesh), intent(in) :: m
         real(rp), dimension(:), intent(in) :: n
+        real(rp), external :: n_r, n_l
+        real(rp), dimension(:), intent(in) :: psi
+        real(rp), external :: psi_l, psi_r
         real(rp), external :: B
         real(rp), dimension(:), intent(out) :: n_suiv
 
         ! variables locales
-        !++!
+        integer :: i
+        real(rp) :: flux1, flux2
+
+        ! premier élément
+        flux1 = flux_G(m%h2(1), psi_l(t), psi(1), n_l(t), n(1), B)
+        flux2 = flux_G(m%h2(2), psi(1), psi(2), n(1), n(2), B)
+        n_suiv(1) = (flux1 - flux2) * dt / m%h(1) + n(1)
+
+        do i = 2, m%l - 1
+            flux1 = flux_G(m%h2(i), psi(i - 1), psi(i), n(i - 1), n(i), B)
+            flux2 = flux_G(m%h2(i + 1), psi(i), psi(i + 1), n(i), n(i + 1), B)
+            n_suiv(i) = (flux1 - flux2) * dt / m%h(i) + n(i)
+        end do
+
+        ! dernier élément
+        flux1 = flux_G(m%h2(m%l), psi(m%l - 1), psi(m%l), n(m%l - 1), n(m%l), B)
+        flux2 = flux_G(m%h2(m%l + 1), psi(m%l), psi_r(t), n(m%l), n_r(t), B)
+        n_suiv(m%l) = (flux1 - flux2) * dt / m%h(i) + n(i)
     end subroutine
 
 END MODULE dd
