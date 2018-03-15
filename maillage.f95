@@ -33,35 +33,37 @@ contains
     ! -------------------------------------------------------------------------------------------------------
     ! constructeur Mesh
     ! -------------------------------------------------------------------------------------------------------
-    subroutine newMesh(x, m)
+    subroutine newMesh(x2, m)
         ! paramètres
-        real(rp), dimension(:) :: x
+        real(rp), dimension(:) :: x2
         type(Mesh) :: m
 
         ! variables locales
         integer :: l, i
 
-        l = size(x) - 2
+        l = size(x2) - 1
         allocate(m%x(l + 2), m%x2(l + 1), m%h(l), m%h2(l + 1))
 
         ! affectation de l
         m%l = l
 
-        ! affectation de x
-        m%x = x
+        ! affectation de x2
+        m%x2 = x2
 
         ! affectation de h2 et x2
-        do i = 1, l + 1
-            m%h2(i) = x(i + 1) - x(i)
-            m%x2(i) = (x(i) + x(i + 1)) / 2.0_rp
+        do i = 2, l + 1
+            m%x(i) = (x2(i - 1) + x2(i)) / 2.0_rp
         end do
-        m%x2(1) = x(1)
-        m%x2(l + 1) = x(l + 2)
+        m%x(1) = x2(1)
+        m%x(l + 2) = x2(l + 1)
 
         ! affectation de h
         do i = 1, l
             m%h(i) = m%x2(i + 1) - m%x2(i)
+            m%h2(i) = m%x(i + 1) - m%x(i)
         end do
+
+        m%h2(l + 1) = m%x(l + 2) - m%x(l + 1)
     end subroutine
 
 

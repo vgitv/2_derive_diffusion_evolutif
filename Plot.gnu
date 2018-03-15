@@ -7,7 +7,7 @@ set output "graphes/u.eps"
 set encoding utf8
 
 # paramètres
-set title "Équation de transport à vitesse constante"
+set title "Dérive diffusion instationnaire"
 set grid
 set xlabel "x"
 set ylabel "y"
@@ -16,10 +16,9 @@ set ylabel "y"
 #set yrange[-1.5:1.5]
 
 # tracé
-plot "sorties/uIni.dat"           u 1:2 w l lc rgb "#008000" lw 1 title "condition initiale",\
-     "sorties/uGodunov.dat"       u 1:2 w l lc rgb "#FF4500" lw 1 title "godunov",\
-     "sorties/uLaxFriedrichs.dat" u 1:2 w l lc rgb "#4B0082" lw 1 title "lax friedrichs",\
-     "sorties/uLaxWendroff.dat"   u 1:2 w l lc rgb "#FFD700" lw 1 title "lax friedrichs"
+plot "sorties/approx_n.dat"   u 1:2 w l lc rgb "#008000" lw 1 title "approx n",\
+     "sorties/approx_p.dat"   u 1:2 w l lc rgb "#FF4500" lw 1 title "approx p",\
+     "sorties/approx_psi.dat" u 1:2 w l lc rgb "#1E90FF" lw 1 title "approx psi"
 
 # affichage écran
 set term wxt enhanced

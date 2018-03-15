@@ -8,8 +8,8 @@ MODULE donnees
     implicit none
 
     real(rp), dimension(:, :), allocatable :: A
-    real(rp), parameter :: delta_n = 1.0_rp
-    real(rp), parameter :: delta_p = 1.0_rp
+    !real(rp), parameter :: delta_n = 1.0_rp
+    !real(rp), parameter :: delta_p = 1.0_rp
     type(Mesh), save :: maill
 
     ! cste telle que nr * pr = nl * pl = C0 pour CB compatibles avec éq. thermique
