@@ -242,29 +242,58 @@ contains
     ! -------------------------------------------------------------------------------------------------------
     ! schéma volumes finis dérive diffusion évolutif
     ! -------------------------------------------------------------------------------------------------------
+    ! IN :
     ! t : maillage temps
     ! m : maillage espace
-    subroutine vf_dd(t, m, n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r, n, p, psi)
+    ! B : schéma parmi B1 (centré), B2 (décentré amont) et B3 (schéma de Scharfetter-Gummel)
+    ! c : dopage sur les pts du maillage
+    ! n0 : condition initiale (CI) pour n
+    ! p0 : CI pour p
+    ! n_l : condition limite (CL) left pour n
+    ! n_r : CL right pour n
+    ! p_l, p_r, psi_l, psi_r : idem
+    ! OUT :
+    ! n : électrons
+    ! p : trous
+    ! psi : potentiel
+    subroutine vf_dd(t, m, B, c, n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r, n, p, psi)
         ! paramètres
         real(rp), dimension(:), intent(in) :: t
         type(Mesh), intent(in) :: m
-        real(rp), external :: n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r
+        real(rp), external :: B, c, n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r
         real(rp), dimension(:), intent(out) :: n, p, psi
 
         ! variables locales
         real(rp) :: dt
         integer :: i
+        real(rp), dimension(m%l) :: n_suiv, p_suiv, psi_suiv, ci
 
         dt = t(2) - t(1)
 
         ! initialisation n0 p0
+        do i = 1, m%l
+            n(i) = n0(m%x(i + 1))
+            p(i) = p0(m%x(i + 1))
+            ci(i) = c(m%x(i + 1))
+        end do
 
-        ! calcul psi0 avec subroutin potentiel
+        ! calcul psi0 avec subroutine potentiel
+        call potentiel(m, n, p, ci, psi_l(0), psi_r(0), psi)
 
         do i = 1, size(t)
             ! calcul itéré n suivant
+            call iter_n(t(i), dt, m, n, n_r, n_l, psi, psi_l, psi_r, B, n_suiv)
+
             ! calcul itéré p suivant
+            call iter_p(t(i), dt, m, p, p_r, p_l, psi, psi_l, psi_r, B, p_suiv)
+
             ! déduction itéré psi suivant
+            call potentiel(m, n_suiv, p_suiv, ci, psi_l(t(i)), psi_r(t(i)), psi_suiv)
+
+            ! remplacement itérés
+            n = n_suiv
+            p = p_suiv
+            psi = psi_suiv
         end do
     end subroutine
 
