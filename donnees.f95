@@ -27,7 +27,7 @@ contains
         ! return
         real(rp) :: c_dopage
 
-        c_dopage = 3.0_rp
+        c_dopage = 10.0_rp
     end function
 
 
@@ -38,13 +38,13 @@ contains
     function n0(x)
         real(rp), intent(in) :: x
         real(rp) :: n0
-        n0 = cos(x)
+        n0 = 0.5_rp
     end function
 
     function p0(x)
         real(rp), intent(in) :: x
         real(rp) :: p0
-        p0 = cos(x)
+        p0 = 1.0_rp
     end function
 
 
@@ -61,7 +61,7 @@ contains
     function n_r(t)
         real(rp), intent(in) :: t
         real(rp) :: n_r
-        n_r = 2.0_rp
+        n_r = 1.0_rp
     end function
 
     function p_l(t)

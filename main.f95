@@ -22,7 +22,7 @@ PROGRAM main
     read (1, *) Tf
     close(1)
 
-    allocate(x2(n), t(m))
+    allocate(x2(n + 1), t(m))
     x2 = linspace(xmin, xmax, n + 1)
     call newMesh(x2, maill)
 
