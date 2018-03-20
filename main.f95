@@ -35,7 +35,7 @@ PROGRAM main
     ! -------------------------------------------------------------------------------------------------------
     ! Schéma explicite
     ! -------------------------------------------------------------------------------------------------------
-    call vf_dd(t, maill, B2, c_dopage, n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r, &
+    call vf_explicite_dd(t, maill, B2, c_dopage, n0, p0, n_l, n_r, p_l, p_r, psi_l, psi_r, &
         approx_n, approx_p, approx_psi)
 
     call saveSol(maill%x, (/ n_l(maill%x(1)), approx_n, n_r(maill%x(maill%l + 2)) /), "sorties/approx_n.dat")
