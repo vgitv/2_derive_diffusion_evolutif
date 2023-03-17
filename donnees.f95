@@ -1,106 +1,91 @@
+! ===========================================================================================================
+! ===========================================================================================================
+
 MODULE donnees
 
-    use math
     use maillage
 
     implicit none
 
+    real(rp), dimension(:, :), allocatable :: A
+    real(rp), parameter :: delta_n = 1.0_rp
+    real(rp), parameter :: delta_p = 1.0_rp
+    type(Mesh), save :: maill
+
+    ! cste telle que nr * pr = nl * pl = C0 pour CB compatibles avec éq. thermique
+    real(rp), parameter :: C0 = 1.0_rp
+
 contains
 
-    ! =======================================================================================================
-    ! Schéma explicite
-    ! =======================================================================================================
     ! -------------------------------------------------------------------------------------------------------
-    ! Construction matrice A_psi : A_psi psi = b_psi. La sol donne psi pour n et p donnés (temps fixé)
+    ! dopage
     ! -------------------------------------------------------------------------------------------------------
-    subroutine build_A(m, A)
+    function c_dopage(x)
         ! paramètres
-        type(Mesh), intent(in) :: m
-        real(rp), dimension(:, :), intent(out) :: A
+        real(rp), intent(in) :: x
 
-        ! variables locales
-        integer :: i
+        ! return
+        real(rp) :: c_dopage
 
-        A = 0.0_rp
-        do i = 1, m%l - 1
-            A(i, i) = 1.0_rp / m%h2(i) + 1.0_rp / m%h2(i + 1)
-            A(i, i + 1) = -1.0_rp / m%h2(i + 1)
-            A(i + 1, i) = A(i, i + 1)
-        end do
-        A(m%l, m%l) = 1.0_rp / m%h2(m%l) + 1.0_rp / m%h2(m%l + 1)
-    end subroutine build_A
+        c_dopage = 3.0_rp
+    end function
 
 
 
     ! -------------------------------------------------------------------------------------------------------
-    ! Calcul second membre A_psi psi = b_psi. La sol donne psi pour n et p donnés (temps fixé)
+    ! Conditions initiales
     ! -------------------------------------------------------------------------------------------------------
-    ! m : maillage d'espace
-    ! n : approx de n à un temps donné sur les elts du maillage d'espace
-    ! p : approx de p à un temps donné sur les elts du maillage d'espace
-    ! c : dopage sur les pts du maillage
-    ! psi_gauche : valeur à gauche (condition bord) pour un temps donné
-    ! psi_droit  : valeur à droite (condition bord) pour un temps donné
-    ! b_psi : vecteur retourné
-    subroutine build_b_psi(m, n, p, c, psi_gauche, psi_droit, b_psi)
-        ! paramètres
-        type(Mesh), intent(in) :: m
-        real(rp), dimension(:), intent(in) :: n, p, c
-        real(rp), intent(in) :: psi_gauche, psi_droit
-        real(rp), dimension(:), intent(out) :: b_psi
+    function n0(x)
+        real(rp), intent(in) :: x
+        real(rp) :: n0
+        n0 = cos(x)
+    end function
 
-        ! variables locales
-        integer :: i
-
-        do i = 1, m%l
-            b_psi(i) = -m%h(i) * (n(i) - p(i) - c(i))
-        end do
-
-        b_psi(1) = b_psi(1) + psi_gauche / m%h2(1)
-        b_psi(m%l) = b_psi(m%l) + psi_droit / m%h2(m%l + 1)
-    end subroutine
+    function p0(x)
+        real(rp), intent(in) :: x
+        real(rp) :: p0
+        p0 = cos(x)
+    end function
 
 
 
     ! -------------------------------------------------------------------------------------------------------
-    ! Pour n et p données (temps fixé), calcul psi au même temps
+    ! Conditions au bord
     ! -------------------------------------------------------------------------------------------------------
-    ! m : maillage d'espace
-    ! n : approx de n à un temps donné sur les elts du maillage d'espace
-    ! p : approx de p à un temps donné sur les elts du maillage d'espace
-    ! c : dopage sur les pts du maillage
-    ! psi_gauche : valeur à gauche (condition bord) pour un temps donné
-    ! psi_droit  : valeur à droite (condition bord) pour un temps donné
-    ! psi : vecteur retourné
-    subroutine potentiel(m, n, p, c, psi_gauche, psi_droit, psi)
-        ! paramètres
-        type(Mesh), intent(in) :: m
-        real(rp), dimension(:), intent(in) :: n, p, c
-        real(rp), intent(in) :: psi_gauche, psi_droit
-        real(rp), dimension(:), intent(out) :: psi
+    function n_l(t)
+        real(rp), intent(in) :: t
+        real(rp) :: n_l
+        n_l = 1.0_rp
+    end function
 
-        ! variables locales
-        real(rp), dimension(m%l) :: b_psi
-        real(rp), dimension(m%l, m%l) :: A_psi
+    function n_r(t)
+        real(rp), intent(in) :: t
+        real(rp) :: n_r
+        n_r = 2.0_rp
+    end function
 
-        call build_A(m, A_psi)
-        call build_b_psi(m, n, p, c, psi_gauche, psi_droit, b_psi)
-        call linSolve("plu", m%l, A_psi, b_psi, psi)
-    end subroutine
+    function p_l(t)
+        real(rp), intent(in) :: t
+        real(rp) :: p_l
+        p_l = C0 / n_l(t)
+    end function
 
+    function p_r(t)
+        real(rp), intent(in) :: t
+        real(rp) :: p_r
+        p_r = C0 / n_r(t)
+    end function
 
+    function psi_l(t)
+        real(rp), intent(in) :: t
+        real(rp) :: psi_l
+        psi_l = 0.5_rp * (log(n_l(t)) - log(p_l(t)))
+    end function
 
-    ! -------------------------------------------------------------------------------------------------------
-    ! Calcul le vecteur n au pas de temps suivant.
-    ! -------------------------------------------------------------------------------------------------------
-    subroutine iter_n(m, n, n_suiv)
-        ! paramètres
-        type(Mesh), intent(in) :: m
-        real(rp), dimension(:), intent(in) :: n
-        real(rp), dimension(:), intent(out) :: n_suiv
-
-        ! variables locales
-        !++!
-    end subroutine
+    function psi_r(t)
+        real(rp), intent(in) :: t
+        real(rp) :: psi_r
+        psi_r = 0.5_rp * (log(n_r(t)) - log(p_r(t)))
+    end function
 
 END MODULE donnees
