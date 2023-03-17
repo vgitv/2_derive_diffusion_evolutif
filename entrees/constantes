@@ -1,5 +1,5 @@
-100    ! n (nb pas d'espace)
+30     ! n (nb d'interfaces d'espace)
 0.0D0  ! xmin
 1.0D0  ! xmax
-100    ! m (nb pas de temps)
+10000  ! m (nb pas de temps)
 1.0D0  ! T (temps final)
